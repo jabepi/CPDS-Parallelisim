@@ -1,0 +1,10 @@
+OMP_NUM_THREADS=2
+make: 'heat-omp' is up to date.
+Iterations        : 25000
+Resolution        : 512
+Algorithm         : 0 (Jacobi)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 33.547 (72.090 GFlop => 2148.94 MFlop/s)
+Convergence to residual=0.000064: 25000 iterations
