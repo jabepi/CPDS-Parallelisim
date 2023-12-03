@@ -4,12 +4,10 @@
 #SBATCH -D .
 #SBATCH --output=submit-omp.sh.o%j
 #SBATCH --error=submit-omp.sh.e%j
-
-input=test.dat
 export OMP_DYNAMIC=false
 
+input=test.dat
 PROG=heat-omp
-
 HOST=$(echo $HOSTNAME | cut -f 1 -d'.')
 
 if [ ${HOST} = 'boada-6' ] || [ ${HOST} = 'boada-7' ] || [ ${HOST} == 'boada-8' ]

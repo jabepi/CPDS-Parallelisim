@@ -1,7 +1,7 @@
 CC     =  gcc 
 OPT3 	= -O3
 CFLAGS  = -fopenmp -Wall -std=c99
-LFLAGS  = -lm 
+LFLAGS  = -lm -lnuma
 
 ALL	= heat-omp 
 all: $(ALL)
