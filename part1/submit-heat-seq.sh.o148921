@@ -1,0 +1,9 @@
+make: 'heat' is up to date.
+Iterations        : 25000
+Resolution        : 1024
+Algorithm         : 0 (Jacobi)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 86.421 (288.358 GFlop => 3336.68 MFlop/s)
+Convergence to residual=0.000129: 25000 iterations

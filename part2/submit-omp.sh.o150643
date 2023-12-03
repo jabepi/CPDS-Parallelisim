@@ -1,0 +1,10 @@
+OMP_NUM_THREADS=2
+make: 'heat-omp' is up to date.
+Iterations        : 25000
+Resolution        : 256
+Algorithm         : 2 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 42.117 (9.049 GFlop => 214.85 MFlop/s)
+Convergence to residual=0.000050: 12552 iterations
