@@ -61,7 +61,7 @@ void printCPUsByNode() {
 }
 
 //Number of blocks 
-#define NB 8
+#define NB 4
 
 #define min(a,b) ( ((a) < (b)) ? (a) : (b) )
 #define max(a,b) ( ((a) > (b)) ? (a) : (b) )
@@ -287,18 +287,35 @@ double relax_gauss1 (double *u, unsigned sizex, unsigned sizey)
     return sum;
 }
 
-double relax_gauss2 (double *u, unsigned sizex, unsigned sizey)
+int processBlock(double *u, int ii, int jj, int sizex, int sizey, int bx, int by) {
+    double unew, diff, sum = 0.0;
+    for (int i=1+ii*bx; i<=min((ii+1)*bx, sizex-2); i++){
+        for (int j=1+jj*by; j<=min((jj+1)*by, sizey-2); j++) {
+            unew= 0.25 * (    u[ i*sizey	+ (j-1) ]+  // left
+                    u[ i*sizey	+ (j+1) ]+  // right
+                    u[ (i-1)*sizey	+ j     ]+  // top
+                    u[ (i+1)*sizey	+ j     ]); // bottom
+            diff = unew - u[i*sizey+ j];
+            sum += diff * diff; 
+            u[i*sizey+j]=unew;
+        }
+    }
+    return sum;
+}
+
+double relax_gauss (double *u, unsigned sizex, unsigned sizey)
 {
     double sum = 0.0;
     int nbx, bx, nby, by;
 
-    nbx = omp_get_max_threads();
+    nbx = NB;
     bx = sizex/nbx;
-    nby = nbx;
+    nby = NB;
     by = sizey/nby;
     
     int cpuList[10] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18};
-
+    int dependList[NB][NB];
+    
     #pragma omp parallel
     {
         //Pin threads to physical cores
@@ -309,48 +326,42 @@ double relax_gauss2 (double *u, unsigned sizex, unsigned sizey)
         sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
 
         double parsum = 0.0;
+        double unew, diff;
         
         #pragma omp single
         {
             for (int ii = 0; ii < nbx; ii++) {
-                // Calculate the starting and ending indices for the first and last rows of each block
-                int start_first_row = (1 + ii * bx) + 1;
-                int end_first_row = start_first_row + (sizey - 2);
-                int start_last_row =  min((ii + 1) * bx, sizex - 2) + 1;
-                int end_last_row = start_last_row + (sizey - 2);
-
-                // Task with dependency on all elements of the first and last rows of each block
-                #pragma omp task firstprivate(ii) \
-                depend(inout:u[start_first_row:end_first_row]), \
-                depend(inout:u[start_last_row:end_last_row])
-                { 
-                    double unew, diff;
-                    for (int jj = 0; jj < nby; jj++) {    
-                        for (int i = 1 + ii * bx; i <= min((ii + 1) * bx, sizex - 2); i++){
-                            for (int j = 1 + jj * by; j <= min((jj + 1) * by, sizey - 2); j++) {
-                                unew= 0.25 * (    
-                                    u[ i*sizey	+ (j-1) ]+  // left
-                                    u[ i*sizey	+ (j+1) ]+  // right
-                                    u[ (i-1)*sizey	+ j     ]+  // top
-                                    u[ (i+1)*sizey	+ j     ]); // bottom
+                for (int jj = 0; jj < nby; jj++) {
+                    #pragma omp task firstprivate(ii, jj) \
+                    depend(in: dependList[max(ii-1, 0)][jj], dependList[ii][max(jj-1, 0)]) \
+                    depend(out: dependList[ii][jj])
+                    {
+                        for (int i=1+ii*bx; i<=min((ii+1)*bx, sizex-2); i++){
+                            for (int j=1+jj*by; j<=min((jj+1)*by, sizey-2); j++) {
+                                unew= 0.25 * (    u[ i*sizey	+ (j-1) ]+  // left
+                                        u[ i*sizey	+ (j+1) ]+  // right
+                                        u[ (i-1)*sizey	+ j     ]+  // top
+                                        u[ (i+1)*sizey	+ j     ]); // bottom
                                 diff = unew - u[i*sizey+ j];
-                                parsum += diff * diff; 
                                 u[i*sizey+j]=unew;
-                                // printf("sum: %f\n", sum);
+
+                                parsum += diff * diff;
                             }
                         }
+                        #pragma omp atomic
+                        sum += parsum;
+                        dependList[ii][jj] = 1;
                     }
-                    #pragma omp atomic
-                    sum += parsum;
                 }
             }
+            dependList[0][0] = 1;
         }
     }
     return sum;
 }
 
 
-double relax_gauss (double *u, unsigned sizex, unsigned sizey)
+double relax_gauss2 (double *u, unsigned sizex, unsigned sizey)
 {
     double unew, diff, sum=0.0;
     int nbx, bx, nby, by;
