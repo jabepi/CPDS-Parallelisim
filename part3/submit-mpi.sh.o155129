@@ -1,0 +1,12 @@
+procs=1
+gcc  -c -O3 -Wall -std=c99 misc.c -o misc.o
+mpicc -O3 -Wall -std=c99 -o heat-mpi heat-mpi.c solver-mpi.c misc.o -lm
+I am the master (0) and going to distribute work to 0 additional workers ...
+Iterations        : 25000
+Resolution        : 256
+Algorithm         : 2 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 4.524 (9.049 GFlop => 2000.12 MFlop/s)
+Convergence to residual=0.000050: 12552 iterations

@@ -1,0 +1,11 @@
+procs=2
+make: 'heat-mpi' is up to date.
+I am the master (0) and going to distribute work to 1 additional workers ...
+Iterations        : 25000
+Resolution        : 256
+Algorithm         : 2 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 2.647 (9.049 GFlop => 3418.88 MFlop/s)
+Convergence to residual=0.000050: 12552 iterations

@@ -1,0 +1,4 @@
+solver-omp.c: In function ‘relax_gauss1’:
+solver-omp.c:108:9: warning: variable ‘dependList’ set but not used [-Wunused-but-set-variable]
+  108 |     int dependList[NB][NB];
+      |         ^~~~~~~~~~

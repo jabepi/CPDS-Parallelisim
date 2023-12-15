@@ -1,0 +1,11 @@
+OMP_NUM_THREADS=1
+gcc  -c -fopenmp -Wall -std=c99 -O3 misc.c -o misc.o
+gcc  -fopenmp -Wall -std=c99 -O3 heat-omp.c solver-omp.c misc.o -lm -lnuma -o heat-omp
+Iterations        : 25000
+Resolution        : 512
+Algorithm         : 2 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 41.946 (72.090 GFlop => 1718.63 MFlop/s)
+Convergence to residual=0.000084: 25000 iterations

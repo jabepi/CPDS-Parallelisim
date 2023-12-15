@@ -1,0 +1,17 @@
+heat-mpi.c: In function ‘main’:
+heat-mpi.c:206:24: warning: ‘np’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+  206 |             residual = relax_redblack(param.u, np, np);
+      |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+heat-mpi.c:279:18: warning: ‘u’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+  279 |         MPI_Send(&u[colsEach + 2], rowsEach * (colsEach + 2), MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+      |                  ^~~~~~~~~~~~~~~~
+heat-mpi.c:288:17: warning: ‘runtime’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+  288 |         runtime = wtime() - runtime;
+      |         ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+heat-mpi.c:300:9: warning: ‘resfile’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+  300 |         write_image( resfile, param.uvis,
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  301 |             param.visres+2,
+      |             ~~~~~~~~~~~~~~~
+  302 |             param.visres+2 );
+      |             ~~~~~~~~~~~~~~~~
