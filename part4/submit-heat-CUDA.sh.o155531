@@ -1,0 +1,17 @@
+Running heat-CUDA
+Iterations        : 25000
+Resolution        : 256
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+
+Execution on CPU (sequential)
+-----------------------------
+Time on CPU in ms.= 9013.696289 (11.464 GFlop => 1271.81 MFlop/s)
+Convergence to residual=0.000050: 15902 iterations
+
+Execution on GPU
+----------------
+
+Time on GPU in ms. = 8263.195312 (11.464 GFlop => 1387.32 MFlop/s)
+Convergence to residual=79.978920: 25000 iterations

@@ -212,29 +212,37 @@ int main( int argc, char *argv[] ) {
     cudaEventRecord( start, 0 );
     cudaEventSynchronize( start );
 
+    //TODO cambio 
+    //Create pointers to device arrays
     float *dev_u, *dev_uhelp;
-
-    // TODO: Allocation on GPU for matrices u and uhelp
-    //...
-
-    // TODO: Copy initial values in u and uhelp from host to GPU
-    //...
+    
+    //Allocate device memory
+    cudaMalloc( &dev_u, sizeof(float)*(np*np));
+    cudaMalloc( &dev_uhelp, sizeof(float)*(np*np));
+    
+    //Copy data to device
+	cudaMemcpy( dev_u,param.u, sizeof(float)*(np*np), cudaMemcpyHostToDevice);
+	// cudaMemcpy( dev_uhelp, param.uhelp, sizeof(float)*(np*np), cudaMemcpyHostToDevice);
 
     iter = 0;
     while(1) {
+
+
         gpu_Heat<<<Grid,Block>>>(dev_u, dev_uhelp, np);
         cudaDeviceSynchronize();  // Wait for compute device to finish.
 
-        // TODO: residual is computed on host, we need to get from GPU values computed in u and uhelp
-        //...
-	residual = cpu_residual (param.u, param.uhelp, np, np);
+        cudaMemcpy( param.u, dev_u, sizeof(float)*(np*np), cudaMemcpyDeviceToHost);
+        cudaMemcpy( param.uhelp, dev_uhelp, sizeof(float)*(np*np), cudaMemcpyDeviceToHost);
 
-	float * tmp = dev_u;
-	dev_u = dev_uhelp;
-	dev_uhelp = tmp;
+        // TODO: residual is computed on host, we need to get from GPU values computed in u and uhelp
+        //V1
+        residual = cpu_residual (param.u, param.uhelp, np, np);
+
+        float * tmp = dev_u;
+        dev_u = dev_uhelp;
+        dev_uhelp = tmp;
 
         iter++;
-
         // solution good enough ?
         if (residual < 0.00005) break;
 
@@ -242,11 +250,13 @@ int main( int argc, char *argv[] ) {
         if (iter>=param.maxiter) break;
     }
 
+    //V2
     // TODO: get result matrix from GPU
     //...
 
     // TODO: free memory used in GPU
-    //...
+    cudaFree( dev_u ); cudaFree( dev_uhelp);
+
 
     cudaEventRecord( stop, 0 );     // instrument code to measue end time
     cudaEventSynchronize( stop );
