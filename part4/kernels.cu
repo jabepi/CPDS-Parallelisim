@@ -2,14 +2,14 @@
 #include <float.h>
 #include <cuda.h>
 
-
+//V1
 __global__ void gpu_Heat (float *h, float *g, int N) {
 
 	// Get block and thread inside block for 2D grid
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
-	
- 	if( i <= N-1 && j <= N-1 && i >= 1 && j >= 1) {
+
+	if( i <= N-2 && j <= N-2 && i >= 1 && j >= 1) {
   		g[i*N+j]= 		0.25 *(h[ i*N     + (j-1) ]+  // left
 					           h[ i*N     + (j+1) ]+  // right
 				               h[ (i-1)*N + j     ]+  // top
@@ -18,36 +18,47 @@ __global__ void gpu_Heat (float *h, float *g, int N) {
 }
 
 
+__global__ void gpu_Heat_Reduction(float *h, float *g, float* red, int N) {
+    
+	//Global identifier
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+    int i = blockIdx.y * blockDim.y + threadIdx.y;
 
-// __global__ void gpu_Heat(float *h, float *g, double* residual, int N) {
-//     // Shared memory to accumulate block-level residual
-//     __shared__ float blockResidual;
+	//Local identifier
+    int threadId = threadIdx.y * blockDim.x + threadIdx.x; 
+    float diff;
 
-//     int i = blockIdx.x * blockDim.x + threadIdx.x;
-//     int j = blockIdx.y * blockDim.y + threadIdx.y;
+    //Reduction array in shared memory
+    extern __shared__ float reduction[];
+    reduction[threadId] = 0.0;
+	if(i == 0 && j == 0){
+		*red = 0;
+	}
 
-//     // Initialize block residual to 0 for the first thread in the block
-//     if (threadIdx.x == 0 && threadIdx.y == 0) {
-//         blockResidual = 0.0;
-//     }
-//     __syncthreads(); // Synchronize threads within a block
+    //Compute the new value
+    if(i < N-1 && j < N-1 && i > 0 && j > 0) {
+        g[i*N+j] = 0.25 *(h[i*N + (j-1)] + h[i*N + (j+1)] + h[(i-1)*N + j] + h[(i+1)*N + j]);
+        diff = g[i*N+j] - h[i*N+j];
+        reduction[threadId] = diff * diff;
+    }
+    
+    __syncthreads();
 
-//     // Compute value and residual for valid grid points
-//     if (i > 0 && i < N - 1 && j > 0 && j < N - 1) {
-//         float newValue = 0.25 * (h[(i - 1) * N + j] + h[(i + 1) * N + j] + h[i * N + j - 1] + h[i * N + j + 1]);
-//         float localResidual = newValue - h[i * N + j];
+    // Parallel reduction in shared memory
+    for (unsigned int s = (blockDim.x * blockDim.y) / 2; s > 0; s >>= 1) {
+        if (threadId < s) {
+            reduction[threadId] += reduction[threadId + s];
+        }
+        __syncthreads();
+    }
 
-//         // Atomic add to accumulate the residual within the block
-//         atomicAdd(&blockResidual, abs(localResidual));
-        
-//         // Update grid point value
-//         g[i * N + j] = newValue;
-//     }
+    // Only the first thread in the block does the atomic add
+    if (threadId == 0) {
+        atomicAdd(red, reduction[0]);
+    }
+}
 
-//     __syncthreads(); // Synchronize threads within a block again
 
-//     // Use one thread to update the global residual
-//     if (threadIdx.x == 0 && threadIdx.y == 0) {
-//         atomicAdd(residual, blockResidual);
-//     }
-// }
+
+
+

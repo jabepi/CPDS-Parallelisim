@@ -37,9 +37,11 @@ int coarsen(float *uold, unsigned oldx, unsigned oldy ,
 
 
 __global__ void gpu_Heat (float *h, float *g, int N);
+__global__ void gpu_Heat_Reduction(float *h, float *g, float* red, int N);
 
 #define NB 8
 #define min(a,b) ( ((a) < (b)) ? (a) : (b) )
+
 
 float cpu_residual (float *u, float *utmp, unsigned sizex, unsigned sizey)
 {
@@ -163,14 +165,13 @@ int main( int argc, char *argv[] ) {
     cudaEventRecord( start, 0 );
     cudaEventSynchronize( start );
 
-    iter = 0;
+    iter = param.maxiter; 
     float residual;
     while(1) {
-	residual = cpu_jacobi(param.u, param.uhelp, np, np);
-	float * tmp = param.u;
-	param.u = param.uhelp;
-	param.uhelp = tmp;
-
+        residual = cpu_jacobi(param.u, param.uhelp, np, np);
+        float * tmp = param.u;
+        param.u = param.uhelp;
+        param.uhelp = tmp;
         iter++;
 
         // solution good enough ?
@@ -211,52 +212,54 @@ int main( int argc, char *argv[] ) {
     // starting time
     cudaEventRecord( start, 0 );
     cudaEventSynchronize( start );
-
-    //TODO cambio 
+ 
     //Create pointers to device arrays
-    float *dev_u, *dev_uhelp;
-    
-    //Allocate device memory
-    cudaMalloc( &dev_u, sizeof(float)*(np*np));
-    cudaMalloc( &dev_uhelp, sizeof(float)*(np*np));
-    
-    //Copy data to device
-	cudaMemcpy( dev_u,param.u, sizeof(float)*(np*np), cudaMemcpyHostToDevice);
-	// cudaMemcpy( dev_uhelp, param.uhelp, sizeof(float)*(np*np), cudaMemcpyHostToDevice);
+    float *dev_u, *dev_uhelp, *dev_red;
 
-    iter = 0;
+    // Allocation on GPU for matrices u and uhelp
+    cudaMalloc((void **)&dev_u, np * np * sizeof(float));
+    cudaMalloc((void **)&dev_uhelp, np * np * sizeof(float));
+    cudaMalloc((void **)&dev_red, 1 * sizeof(float));
+
+    // Copy initial values in u and uhelp from host to GPU
+    cudaMemcpy(dev_u, param.u, np * np * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_uhelp, param.uhelp, np * np * sizeof(float), cudaMemcpyHostToDevice);
+    
+
+    iter = 0; 
     while(1) {
 
+        // V1 - Copy data back to host to compute residual
+        // gpu_Heat<<<Grid,Block>>>(dev_u, dev_uhelp, np);
+        // cudaDeviceSynchronize();  
+        // cudaMemcpy(param.u, dev_u, np * np * sizeof(float), cudaMemcpyDeviceToHost);
+        // cudaMemcpy(param.uhelp, dev_uhelp, np * np * sizeof(float), cudaMemcpyDeviceToHost);
+        // residual = cpu_residual (param.u, param.uhelp, np, np);
 
-        gpu_Heat<<<Grid,Block>>>(dev_u, dev_uhelp, np);
-        cudaDeviceSynchronize();  // Wait for compute device to finish.
-
-        cudaMemcpy( param.u, dev_u, sizeof(float)*(np*np), cudaMemcpyDeviceToHost);
-        cudaMemcpy( param.uhelp, dev_uhelp, sizeof(float)*(np*np), cudaMemcpyDeviceToHost);
-
-        // TODO: residual is computed on host, we need to get from GPU values computed in u and uhelp
-        //V1
-        residual = cpu_residual (param.u, param.uhelp, np, np);
+        // V2 - Reduction on GPU
+        gpu_Heat_Reduction<<<Grid,Block>>>(dev_u, dev_uhelp, dev_red, np);
+        cudaDeviceSynchronize();
+        cudaMemcpy( &residual, dev_red, sizeof(float), cudaMemcpyDeviceToHost);
 
         float * tmp = dev_u;
         dev_u = dev_uhelp;
         dev_uhelp = tmp;
 
         iter++;
+
         // solution good enough ?
         if (residual < 0.00005) break;
 
-        // max. iteration reached ? (no limit with maxiter=0)
+        // max. iteration reached ?
         if (iter>=param.maxiter) break;
     }
 
-    //V2
-    // TODO: get result matrix from GPU
-    //...
+    // Get result matrix from GPU
+    cudaMemcpy(param.u, dev_u, np * np * sizeof(float), cudaMemcpyDeviceToHost);
 
-    // TODO: free memory used in GPU
-    cudaFree( dev_u ); cudaFree( dev_uhelp);
-
+    // Free memory used in GPU
+    cudaFree(dev_u);
+    cudaFree(dev_uhelp);
 
     cudaEventRecord( stop, 0 );     // instrument code to measue end time
     cudaEventSynchronize( stop );

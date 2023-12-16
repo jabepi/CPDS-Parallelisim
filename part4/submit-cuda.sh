@@ -22,8 +22,11 @@ export PATH=/Soft/cuda/11.2.1/bin:$PATH
 KERNEL=heat-CUDA
 
 # Define threads per block
-txb=8
+txb=16
 
 echo "Running ${KERNEL}"
+
+# make clean
+make
 
 ./${KERNEL} test.dat -t $txb

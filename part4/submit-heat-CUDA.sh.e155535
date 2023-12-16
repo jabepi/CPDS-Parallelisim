@@ -1,5 +1,0 @@
-
-Solving Heat equation on the CPU and the GPU
---------------------------------------------
-Number of threads per block in each dimension = 8
-Number of blocks per grid in each dimension   = 33

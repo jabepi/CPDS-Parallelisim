@@ -1,0 +1,11 @@
+heat-CUDA.cu(112): warning: conversion from a string literal to "char *" is deprecated
+
+heat-CUDA.cu(133): warning: variable "Grid_Dim" was set but never used
+
+heat-CUDA.cu(160): warning: variable "elapsed_time_ms" was declared but never referenced
+
+heat-CUDA.cu(112): warning: conversion from a string literal to "char *" is deprecated
+
+
+Solving Heat equation on the CPU and the GPU
+--------------------------------------------

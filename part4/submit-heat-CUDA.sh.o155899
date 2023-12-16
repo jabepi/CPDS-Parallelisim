@@ -1,0 +1,19 @@
+Running heat-CUDA
+/Soft/cuda/11.2.1/bin/nvcc -c  kernels.cu  -o kernels.o
+/Soft/cuda/11.2.1/bin/nvcc  heat-CUDA.cu kernels.o  -o heat-CUDA
+Iterations        : 25000
+Resolution        : 256
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+
+Execution on CPU (sequential)
+-----------------------------
+Time on CPU in ms.= 0.587872 (18.023 GFlop => 30658238.00 MFlop/s)
+Convergence to residual=163.640106: 25001 iterations
+
+Execution on GPU
+----------------
+
+Time on GPU in ms. = 199.254532 (18.023 GFlop => 90452.75 MFlop/s)
+Convergence to residual=0.000050: 15901 iterations
